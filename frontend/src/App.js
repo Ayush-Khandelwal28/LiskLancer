@@ -4,6 +4,7 @@ import Navbar from './components/Navbar';
 import Home from './pages/Home';
 import ViewGig from './pages/ViewGig';
 import SubmitWork from './pages/SubmitWork';
+import MyGigs from './pages/MyGigs';
 import '@rainbow-me/rainbowkit/styles.css';
 import {
   getDefaultConfig,
@@ -50,6 +51,7 @@ const App = () => {
                 <Route path="/" element={<Home />} /> {/* Use 'element' prop instead of 'component' */}
                 <Route path="/view/:id" element={<ViewGig />} />
                 <Route path='/submit/:id' element={<SubmitWork />} />
+                <Route path='mygigs' element={<MyGigs />} />
               </Routes>
             </div>
           </Router>
