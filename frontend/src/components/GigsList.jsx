@@ -1,50 +1,51 @@
-import React from "react";
+import React, { useState, useEffect } from "react";
 import "./css/GigsList.css";
 import { Link } from "react-router-dom";
-// Import any necessary modules or libraries
+import { ethers } from "ethers";
+import masterArtifact from '../contractArtifacts/Master.json';
+import gigArtifact from '../contractArtifacts/Gig.json';
+import { masterAddress } from '../contractArtifacts/addresses';
 
 const GigsList = () => {
-    // Dummy data array
-    const dummyData = [
-        {
-            id: 1,
-            name: "Project 1",
-            description: "Description for Project 1",
-            metrics: "Metrics for Project 1",
-            isBidPlaced: false
-        },
-        {
-            id: 2,
-            name: "Project 2",
-            description: "Description for Project 2",
-            metrics: "Metrics for Project 2",
-            isBidPlaced: true
-        },
-        {
-            id: 3,
-            name: "Project 3",
-            description: "Description for Project 3",
-            metrics: "Metrics for Project 3",
-            isBidPlaced: false
-        },
-        // Add more dummy data objects as needed
-        {
-            id: 4,
-            name: "Project 4",
-            description: "Description for Project 4",
-            metrics: "Metrics for Project 4",
-            isBidPlaced: false
-        },
-        // Add more dummy data objects as needed
-        {
-            id: 5,
-            name: "Project 5",
-            description: "Description for Project 5",
-            metrics: "Metrics for Project 5",
-            isBidPlaced: false
-        },
-        // Add more dummy data objects as needed
-    ];
+    const [gigs, setGigs] = useState([]);
+    const [loading, setLoading] = useState(true);
+
+    useEffect(() => {
+        const fetchGigs = async () => {
+            try {
+                const provider = new ethers.providers.Web3Provider(window.ethereum);
+                const signer = provider.getSigner();
+                const masterContract = new ethers.Contract(masterAddress, masterArtifact.abi, signer);
+                const gigAddresses = await masterContract.getAllProjects(); // Adjust method name according to your contract
+
+                const gigabi = gigArtifact.abi;
+                const currGigs = [];
+                for (let i = 0; i < gigAddresses.length; i++) {
+                    const gigAddress = gigAddresses[i];
+                    const gigContract = new ethers.Contract(gigAddress, gigabi, signer);
+                    const [gigName, gigDescription, gigMetrics] = await Promise.all([
+                        gigContract.projectName(),
+                        gigContract.projectDescription(),
+                        gigContract.projectMetrics()
+                    ]);
+                    const gigData = {
+                        id: gigAddress,
+                        title: gigName,
+                        description: gigDescription,
+                        metrics: gigMetrics,
+                    };
+                    currGigs.push(gigData);
+                }
+
+                setGigs(currGigs);
+                setLoading(false);
+            } catch (error) {
+                console.error("Error fetching gigs:", error);
+            }
+        };
+
+        fetchGigs();
+    }, []);
 
     return (
         <div id="recently-posted" className="recently-posted-container">
@@ -57,31 +58,22 @@ const GigsList = () => {
                 </div>
             </div>
             <div className="card-container">
-                {dummyData.map((project) => (
-                    <div className="card" key={project.id}>
-                        <div className="card-content">
-                            <h3 className="card-title">{project.name}</h3>
-                            <p className="card-description">{project.description}</p>
-                            <p className="card-metrics">{project.metrics}</p>
-                            <form className="recent-card-form">
-                                <input type="number" placeholder="Bid Amount" id="bidAmountInput" />
-                                <input type="text" placeholder="Secret Key" id="secretKeyInput" />
-                                {/* {project.isBidPlaced ? (
-                                    <button className="recent-post-button">
-                                        Reveal Bid
-                                    </button>
-                                ) : (
-                                    <button className="recent-post-button">
-                                        Post Bid
-                                    </button>
-                                )} */}
+                {loading ? (
+                    <p>Loading...</p>
+                ) : (
+                    gigs.map((project) => (
+                        <div className="card" key={project.id}>
+                            <div className="card-content">
+                                <h3 className="card-title">{project.title}</h3>
+                                <p className="card-description">{project.description}</p>
+                                <p className="card-metrics">{project.metrics}</p>
                                 <Link to={`/view/${project.id}`} className="recent-post-button">
                                     View Gig
                                 </Link>
-                            </form>
+                            </div>
                         </div>
-                    </div>
-                ))}
+                    ))
+                )}
             </div>
         </div>
     );
