@@ -1,11 +1,14 @@
 import React, { useEffect, useState } from 'react';
 import { ethers } from "ethers";
+import { useParams } from 'react-router-dom';
 import './ViewGig.css';
 import freelanceGirl from "../assets/image.png";
 
 const ViewGig = () => {
     const [fetchedProject, setFetchedProject] = useState({});
     const [loading, setLoading] = useState(true); // State to track loading status
+
+    const { gigAddress } = useParams();
 
     // Contract ABI, address, and provider setup
     const abi = [
@@ -372,7 +375,11 @@ const ViewGig = () => {
 
     useEffect(() => {
         fetchProject();
-    }, []);
+    }, [gigAddress]);
+
+    useEffect(() => {
+        console.log('ID:', gigAddress);
+    }, [gigAddress]);
 
     return (
         <div className="view-gig-container">

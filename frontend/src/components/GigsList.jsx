@@ -1,5 +1,6 @@
 import React from "react";
 import "./css/GigsList.css";
+import { Link } from "react-router-dom";
 // Import any necessary modules or libraries
 
 const GigsList = () => {
@@ -65,7 +66,7 @@ const GigsList = () => {
                             <form className="recent-card-form">
                                 <input type="number" placeholder="Bid Amount" id="bidAmountInput" />
                                 <input type="text" placeholder="Secret Key" id="secretKeyInput" />
-                                {project.isBidPlaced ? (
+                                {/* {project.isBidPlaced ? (
                                     <button className="recent-post-button">
                                         Reveal Bid
                                     </button>
@@ -73,7 +74,10 @@ const GigsList = () => {
                                     <button className="recent-post-button">
                                         Post Bid
                                     </button>
-                                )}
+                                )} */}
+                                <Link to={`/view/${project.id}`} className="recent-post-button">
+                                    View Gig
+                                </Link>
                             </form>
                         </div>
                     </div>

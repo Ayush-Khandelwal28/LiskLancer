@@ -3,6 +3,7 @@ import { BrowserRouter as Router, Routes, Route } from 'react-router-dom'; // Us
 import Navbar from './components/Navbar';
 import Home from './pages/Home';
 import ViewGig from './pages/ViewGig';
+import SubmitWork from './pages/SubmitWork';
 import '@rainbow-me/rainbowkit/styles.css';
 import {
   getDefaultConfig,
@@ -47,7 +48,8 @@ const App = () => {
               <Navbar />
               <Routes> {/* Wrap your routes with <Routes> */}
                 <Route path="/" element={<Home />} /> {/* Use 'element' prop instead of 'component' */}
-                <Route path="/view" element={<ViewGig />} />
+                <Route path="/view/:id" element={<ViewGig />} />
+                <Route path='/submit/:id' element={<SubmitWork />} />
               </Routes>
             </div>
           </Router>
