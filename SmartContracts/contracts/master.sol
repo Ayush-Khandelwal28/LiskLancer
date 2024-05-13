@@ -2,31 +2,58 @@
 pragma solidity ^0.8.0;
 
 contract Master {
-    mapping(address => address[]) public ownerToProjects;
-    
-    address[] public allOwners;
+    mapping(address => address[]) public employerToProjects;
+    mapping(address => address[]) public freelancerToProjects;
+    address[] public allemployers;
+    address[] public allFreelancers;
     address[] public allProjects;
     address[] public disputeHandlers;
 
-    function addProject(address _owner, address _project) public {
-        ownerToProjects[_owner].push(_project);
+    
+    function addProject(address _employer, address _freelancer, address _project) public {
+        addProjectemployer(_employer, _project);
+        addProjectFreelancer(_freelancer, _project);
         allProjects.push(_project);
-        if (!isOwnerRegistered(_owner)) {
-            allOwners.push(_owner);
+    }
+
+    function addProjectemployer(address _employer, address _project) public {
+        employerToProjects[_employer].push(_project);
+        if (!isemployerRegistered(_employer)) {
+            allemployers.push(_employer);
         }
     }
 
-    function getProjectsByOwner(address _owner) public view returns (address[] memory) {
-        return ownerToProjects[_owner];
+    function addProjectFreelancer(address _freelancer, address _project) public {
+        freelancerToProjects[_freelancer].push(_project);
+        if (!isFreelancerRegistered(_freelancer)) {
+            allFreelancers.push(_freelancer);
+        }
+    }
+
+    function getProjectsByemployer(address _employer) public view returns (address[] memory) {
+        return employerToProjects[_employer];
+    }
+
+    function getProjectsByFreelancer(address _freelancer) public view returns (address[] memory) {
+        return freelancerToProjects[_freelancer];
     }
     
     function getAllProjects() public view returns (address[] memory) {
         return allProjects;
     }
 
-    function isOwnerRegistered(address _owner) internal view returns (bool) {
-        for (uint i = 0; i < allOwners.length; i++) {
-            if (allOwners[i] == _owner) {
+    function isemployerRegistered(address _employer) internal view returns (bool) {
+        for (uint i = 0; i < allemployers.length; i++) {
+            if (allemployers[i] == _employer) {
+                return true;
+            }
+        }
+        return false;
+    }
+
+    function isFreelancerRegistered(address _freelancer) internal view returns (bool) {
+        for (uint i = 0; i < allFreelancers.length; i++) {
+            if (allFreelancers[i] == _freelancer) {
                 return true;
             }
         }

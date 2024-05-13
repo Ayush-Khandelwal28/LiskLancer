@@ -2,9 +2,8 @@
 pragma solidity ^0.8.0;
 
 contract Gig {
-    
-    modifier onlyOwner() {
-        require(msg.sender == owner, "Only owner can call this function");
+    modifier onlyemployer() {
+        require(msg.sender == employer, "Only employer can call this function");
         _;
     }
 
@@ -13,7 +12,7 @@ contract Gig {
         _;
     }
 
-    address public owner;
+    address public employer;
     address public winner;
     int public winningBid;
     string public projectName;
@@ -42,19 +41,7 @@ contract Gig {
         string memory _projectDescription,
         string memory _projectMetrics
     ) {
-        require(
-            bytes(_projectName).length >= 4,
-            "Project name must be of length at least 4"
-        );
-        require(
-            bytes(_projectDescription).length >= 20,
-            "Project description must be of length at least 20"
-        );
-        require(
-            bytes(_projectMetrics).length >= 30,
-            "Project metrics must be of length at least 30"
-        );
-        owner = msg.sender;
+        employer = msg.sender;
         projectName = _projectName;
         projectDescription = _projectDescription;
         projectMetrics = _projectMetrics;
@@ -77,7 +64,7 @@ contract Gig {
     }
 
     // Function to compute winner
-    function computeWinner() public onlyOwner {
+    function computeWinner() public onlyemployer {
         // require(
         //     bidders.length >= MIN_NUM_BIDDERS,
         //     "At least 3 bidders required"
@@ -101,21 +88,8 @@ contract Gig {
         winner = minimumBidder;
         winningBid = minimumBid;
         winnerCalculated = true;
-        emit WinnerComputed(minimumBidder, minimumBid);
-    }
-
-    // Function to pause bidding
-    function pauseBidding() public onlyOwner {
-        require(biddingPaused == false, "Bidding is already paused");
         biddingPaused = true;
-        emit BiddingPaused();
-    }
-
-    // Function to resume bidding
-    function resumeBidding() public onlyOwner {
-        require(biddingPaused == true, "Bidding is not paused");
-        biddingPaused = false;
-        emit BiddingResumed();
+        emit WinnerComputed(minimumBidder, minimumBid);
     }
 
     function getNumBidsPlaced() public view returns (uint) {
@@ -126,7 +100,7 @@ contract Gig {
         return bytes(encryptedBids[bidder]).length > 0;
     }
 
-    function setEscrowAddress(address _escrowAddress) public onlyOwner {
+    function setEscrowAddress(address _escrowAddress) public onlyemployer {
         escrowAddress = _escrowAddress;
     }
 }

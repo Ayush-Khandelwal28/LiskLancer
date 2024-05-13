@@ -3,13 +3,13 @@ pragma solidity ^0.8.0;
 
 
 contract Escrow {
-    address public projectOwner;
+    address public projectemployer;
     address public freelancer;
-    uint256 public projectOwnerStake;
+    uint256 public projectemployerStake;
     uint256 public freelancerStake;
     bool public funds_released;
     bool public projectSubmitted;
-    bool public projectOwnerStaked;
+    bool public projectemployerStaked;
     bool public freelancerStaked;
     bool public escrowactivated;
     string public codeLink;
@@ -19,19 +19,19 @@ contract Escrow {
 
     constructor(
         address _freelancer,
-        uint256 _projectOwnerStake,
+        uint256 _projectemployerStake,
         address _projectId
     ) {
-        projectOwner = msg.sender;
+        projectemployer = msg.sender;
         freelancer = _freelancer;
-        projectOwnerStake = _projectOwnerStake;
+        projectemployerStake = _projectemployerStake;
         projectId = _projectId;
     }
 
-    modifier onlyProjectOwner() {
+    modifier onlyProjectemployer() {
         require(
-            msg.sender == projectOwner,
-            "Only the project owner can perform this action."
+            msg.sender == projectemployer,
+            "Only the project employer can perform this action."
         );
         _;
     }
@@ -64,7 +64,7 @@ contract Escrow {
     
 
     function stakeFreelancer() public onlyFreelancer notReleased {
-        freelancerStake = 5 * (projectOwnerStake % 100);
+        freelancerStake = 5 * (projectemployerStake % 100);
     }
 
     function submitProject(
