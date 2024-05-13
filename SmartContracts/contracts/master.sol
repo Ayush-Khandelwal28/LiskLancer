@@ -10,17 +10,12 @@ contract Master {
     address[] public disputeHandlers;
 
     
-    function addProject(address _employer, address _freelancer, address _project) public {
-        addProjectemployer(_employer, _project);
-        addProjectFreelancer(_freelancer, _project);
-        allProjects.push(_project);
-    }
-
     function addProjectemployer(address _employer, address _project) public {
         employerToProjects[_employer].push(_project);
         if (!isemployerRegistered(_employer)) {
             allemployers.push(_employer);
         }
+        allProjects.push(_project);
     }
 
     function addProjectFreelancer(address _freelancer, address _project) public {

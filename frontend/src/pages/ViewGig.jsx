@@ -1,7 +1,7 @@
 import React, { useEffect, useState } from 'react';
 import { ethers } from "ethers";
 import { useParams } from 'react-router-dom';
-import './ViewGig.css';
+import './css/ViewGig.css';
 import freelanceGirl from "../assets/image.png";
 
 const ViewGig = () => {
