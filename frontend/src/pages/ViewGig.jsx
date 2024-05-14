@@ -19,7 +19,8 @@ const ViewGig = () => {
     const [isBidPlaced, setIsBidPlaced] = useState(false);
     const [isFreelancerSigned, setIsFreelancerSigned] = useState(false);
     const [isEmployerSigned, setIsEmployerSigned] = useState(false);
-    // const [winner, setWinner] = useState({});
+    const [isGigSubmitted, setIsGigSubmitted] = useState(false);
+    const [submittedGig, setSubmittedGig] = useState({});
     const [isWinnerCalculated, setIsWinnerCalculated] = useState(false);
     const [bidAmount, setBidAmount] = useState('');
     const [secretKey, setSecretKey] = useState('');
@@ -55,12 +56,18 @@ const ViewGig = () => {
                 if (escrowAddress != '0x0000000000000000000000000000000000000000') {
                     const currEscrowContract = new ethers.Contract(escrowAddress, escrowArtifact.abi, signer);
                     setEscrowContract(currEscrowContract);
-                    const [isEmployerSigned, isFreelancerSigned] = await Promise.all([
-                        escrowContract.projectemployerStaked(),
-                        escrowContract.freelancerStaked()
+                    const [isEmployerSigned, isFreelancerSigned, isGigSubmitted] = await Promise.all([
+                        currEscrowContract.projectemployerStaked(),
+                        currEscrowContract.freelancerStaked(),
+                        currEscrowContract.projectSubmitted()
                     ]);
                     setIsEmployerSigned(isEmployerSigned);
                     setIsFreelancerSigned(isFreelancerSigned);
+                    setIsGigSubmitted(isGigSubmitted);
+                    if (isGigSubmitted) {
+                        await fetchSubmittedGig();
+                        console.log("Fetched submitted gig...");
+                    }
                 }
                 const gigData = {
                     id: gigAddress.toString(),
@@ -78,7 +85,6 @@ const ViewGig = () => {
                 console.log('Fetched project:', gigData);
                 setFetchedProject(gigData);
                 setIsBidPlaced(gigData.isBidPlaced);
-
                 setLoading(false);
                 console.log('Fetched project:', gigData);
             } catch (error) {
@@ -151,6 +157,22 @@ const ViewGig = () => {
         const tx2 = await gigContract.setEscrowAddress(escrowContractAddress);
     };
 
+    const fetchSubmittedGig = async () => {
+        console.log("Fetching submitted gig...");
+        const gigLink = await escrowContract.codeLink();
+        const assetsLink = await escrowContract.assetsLink();
+        const comments = await escrowContract.comments();
+        console.log("Gig Link: ", gigLink);
+        console.log("Assets Link: ", assetsLink);
+        console.log("Comments: ", comments);
+        const submittedGigData = {
+            gigLink: gigLink,
+            assetsLink: assetsLink,
+            comments: comments
+        };
+        setSubmittedGig(submittedGigData);
+    }
+
     return (
         <div className="view-gig-container">
             <div className="left-section">
@@ -170,7 +192,7 @@ const ViewGig = () => {
                         <div className="bid-section">
                             {loggedInUser !== fetchedProject.employer && (
                                 <>
-                                    {fetchedProject.isWinnerCalculated && (
+                                    {fetchedProject.isWinnerCalculated ? (
                                         <>
                                             {fetchedProject.winner === loggedInUser ? (
                                                 <>
@@ -178,12 +200,15 @@ const ViewGig = () => {
                                                         <>
                                                             <p>You have signed the Gig</p>
                                                             <p>Submit your work here: </p>
-                                                            <Link to={`/submit/${gigAddress}`}>Submit Work</Link>
+                                                            <Link to={`/submit/${gigAddress}`}>
+                                                                <button>Submit Work</button>
+                                                            </Link>
                                                         </>
                                                     ) : (
                                                         <>
                                                             <p>Congrats! You are the winner of this Gig</p>
-                                                            <p>Sign and Stake : {5 * ((fetchedProject.winningBid) % 100)} to finalize the gig</p>
+                                                            <p>Winning Bid: {fetchedProject.winningBid}</p>
+                                                            <p>Sign and Stake : {((parseInt(fetchedProject.winningBid)) * 5) % 100} to finalize the gig</p>
                                                             <button onClick={signBidFreelancer}>Sign Gig</button>
                                                         </>
                                                     )}
@@ -192,29 +217,33 @@ const ViewGig = () => {
                                                 <p>Sorry, you are not the winner of this Gig. Check out other Gigs to work on.</p>
                                             )}
                                         </>
-                                    )}
-                                    <div className="bid-input">
-                                        <input
-                                            type="number"
-                                            placeholder="Enter your bid"
-                                            value={bidAmount}
-                                            onChange={(e) => setBidAmount(e.target.value)}
-                                        />
-                                    </div>
-                                    <div className="bid-input">
-                                        <input
-                                            type="text"
-                                            placeholder="Enter your secret key"
-                                            value={secretKey}
-                                            onChange={(e) => setSecretKey(e.target.value)}
-                                        />
-                                    </div>
-                                    {!isBidPlaced && ( // If bid is not placed
-                                        <button onClick={handlePlaceBid}>Place Bid</button>
-                                    )}
-                                    {isBidPlaced && ( // If bid is placed
-                                        <button onClick={handleRevealBid}>Reveal Bid</button>
-                                    )}
+                                    ) :
+                                        (<>
+
+                                            <div className="bid-input">
+                                                <input
+                                                    type="number"
+                                                    placeholder="Enter your bid"
+                                                    value={bidAmount}
+                                                    onChange={(e) => setBidAmount(e.target.value)}
+                                                />
+                                            </div>
+                                            <div className="bid-input">
+                                                <input
+                                                    type="text"
+                                                    placeholder="Enter your secret key"
+                                                    value={secretKey}
+                                                    onChange={(e) => setSecretKey(e.target.value)}
+                                                />
+                                            </div>
+                                            {!isBidPlaced && (
+                                                <button onClick={handlePlaceBid}>Place Bid</button>
+                                            )}
+                                            {isBidPlaced && (
+                                                <button onClick={handleRevealBid}>Reveal Bid</button>
+                                            )}
+                                        </>)
+                                    }
                                 </>
                             )}
                             {loggedInUser === fetchedProject.employer && (
@@ -223,7 +252,29 @@ const ViewGig = () => {
                                         <>
                                             <p>Winner: {fetchedProject.winner}</p>
                                             <p>Winning Bid: {fetchedProject.winningBid}</p>
-                                            <button onClick={signBidEmployer}>Sign Gig</button>
+                                            {escrowContract ? (
+                                                <>
+                                                    {isGigSubmitted ? (
+                                                        <>
+                                                            <p>Gig Submitted</p>
+                                                            <p>The submission details are: </p>
+                                                            <p>Gig : {submittedGig.gigLink}</p>
+                                                            <p>Assets : {submittedGig.assetsLink}</p>
+                                                            <p>Comments: {submittedGig.comments}</p>
+                                                            <p>Satisfied with submission ?</p>
+                                                            <button>Release Funds</button>
+                                                            <Link to={`/dispute/${gigAddress}`}>
+                                                                <button>Raise Dispute</button>
+                                                            </Link>
+                                                        </>
+                                                    ) : (
+                                                        <p>Waiting for Freelancer to submit work</p>
+                                                    )}
+                                                </>
+                                            ) : (
+                                                <button onClick={signBidEmployer}>Sign Gig</button>
+                                            )}
+
                                         </>
                                     ) : (
                                         <>

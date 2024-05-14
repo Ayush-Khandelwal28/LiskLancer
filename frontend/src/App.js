@@ -15,6 +15,7 @@ import {
   QueryClientProvider,
   QueryClient,
 } from "@tanstack/react-query";
+import Dispute from './pages/Dispute';
 
 const LiskSepolia = {
   id: 4202,
@@ -52,6 +53,7 @@ const App = () => {
                 <Route path="/view/:id" element={<ViewGig />} />
                 <Route path='/submit/:id' element={<SubmitWork />} />
                 <Route path='mygigs' element={<MyGigs />} />
+                <Route path='/dispute/:id' element={<Dispute />} />
               </Routes>
             </div>
           </Router>

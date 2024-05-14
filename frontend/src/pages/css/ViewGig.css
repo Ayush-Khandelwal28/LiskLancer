@@ -76,3 +76,23 @@ button:hover {
   outline: none;
   border-color: #007bff;
 }
+
+.winner-section, .not-winner-section {
+  margin-top: 20px;
+}
+
+.submit-button, .sign-button {
+  background-color: #407BFF;
+  color: white;
+  border: none;
+  padding: 10px 20px;
+  border-radius: 5px;
+  cursor: pointer;
+  margin-top: 10px;
+  transition: transform 0.3s ease, box-shadow 0.3s ease;
+}
+
+.submit-button:hover, .sign-button:hover {
+  transform: scale(1.05);
+  box-shadow: 0px 5px 10px rgba(0, 0, 0, 0.3);
+}

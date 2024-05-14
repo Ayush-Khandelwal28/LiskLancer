@@ -1,4 +1,4 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import { useParams } from 'react-router-dom';
 import Done from '../assets/Done.png';
 import gigArtifacts from '../contractArtifacts/Gig.json';
@@ -17,19 +17,34 @@ const SubmitWork = () => {
 
     const provider = new ethers.providers.Web3Provider(window.ethereum);
     const signer = provider.getSigner();
+    const gigContract = new ethers.Contract(gigAddress, gigArtifacts.abi, signer);
+
+    useEffect(() => {
+        const checkSubmissionStatus = async () => {
+            console.log("Checking project submission status");
+            try {
+                const escrowAddress = await gigContract.escrowAddress();
+                const escrowContract = new ethers.Contract(escrowAddress, escrowArtifacts.abi, signer);
+                const isSubmitted = await escrowContract.projectSubmitted();
+                setIsGigSubmitted(isSubmitted);
+                console.log("Project submission status:", isSubmitted);
+            } catch (error) {
+                console.error("Error checking project submission status:", error);
+            }
+        };
+
+        checkSubmissionStatus();
+    }, []); // Empty dependency array to run only once when the component mounts
 
     const handleSubmit = async (event) => {
         event.preventDefault();
         console.log("Submitting project");
-        const gigContract = new ethers.Contract(gigAddress, gigArtifacts.abi, signer);
         console.log(gigContract);
         const escrowAddress = await gigContract.escrowAddress();
-        console.log("Escrow Address is",escrowAddress);
+        console.log("Escrow Address is", escrowAddress);
         const escrowContract = new ethers.Contract(escrowAddress, escrowArtifacts.abi, signer);
         console.log(escrowContract);
-        console.log("Checking if project is submitted");
         const isSubmitted = await escrowContract.projectSubmitted();
-        setIsGigSubmitted(isSubmitted);
         console.log(isSubmitted);
         console.log(projectLink, assets, note);
         console.log("Submitting project");
