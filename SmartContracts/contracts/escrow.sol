@@ -26,6 +26,7 @@ contract Escrow {
         freelancer = _freelancer;
         projectemployerStake = _projectemployerStake;
         projectId = _projectId;
+        projectemployerStaked = true;
     }
 
     modifier onlyProjectemployer() {
@@ -64,7 +65,7 @@ contract Escrow {
     
 
     function stakeFreelancer() public onlyFreelancer notReleased {
-        freelancerStake = 5 * (projectemployerStake % 100);
+        freelancerStaked = true;
     }
 
     function submitProject(

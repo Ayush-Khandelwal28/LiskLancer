@@ -1,9 +1,11 @@
 import React, { useEffect, useState } from 'react';
 import { ethers } from "ethers";
-import { useParams } from 'react-router-dom';
+import { Link, useParams } from 'react-router-dom';
 import gigArtifact from '../contractArtifacts/Gig.json';
 import masterArtifact from '../contractArtifacts/Master.json';
+import escrowArtifact from '../contractArtifacts/Escrow.json';
 import { masterAddress } from '../contractArtifacts/addresses';
+
 import './css/ViewGig.css';
 import freelanceGirl from "../assets/image.png";
 import { encrypt, decrypt } from '../scripts/encrypt';
@@ -14,6 +16,10 @@ const ViewGig = () => {
     const [loggedInUser, setLoggedInUser] = useState('');
     const [gigContract, setGigContract] = useState(null);
     const [isBidPlaced, setIsBidPlaced] = useState(false);
+    const [isFreelancerSigned, setIsFreelancerSigned] = useState(false);
+    const [isEmployerSigned, setIsEmployerSigned] = useState(false);
+    // const [winner, setWinner] = useState({});
+    const [isWinnerCalculated, setIsWinnerCalculated] = useState(false);
     const [bidAmount, setBidAmount] = useState('');
     const [secretKey, setSecretKey] = useState('');
 
@@ -33,14 +39,27 @@ const ViewGig = () => {
                 const gigabi = gigArtifact.abi;
                 const gigContract = new ethers.Contract(gigAddress, gigabi, signer);
                 setGigContract(gigContract);
-                const [gigName, gigDescription, gigMetrics, isBidPlaced, employer, numOfBidders] = await Promise.all([
+                const [gigName, gigDescription, gigMetrics, isBidPlaced, employer, numOfBidders, WinnerCalculated, winner, winningBid, escrowAddress] = await Promise.all([
                     gigContract.projectName(),
                     gigContract.projectDescription(),
                     gigContract.projectMetrics(),
                     gigContract.hasPlacedBid(currUser),
                     gigContract.employer(),
                     gigContract.getNumBidsPlaced(),
+                    gigContract.winnerCalculated(),
+                    gigContract.winner(),
+                    gigContract.winningBid(),
+                    gigContract.escrowAddress()
                 ]);
+                if (escrowAddress != '0x0000000000000000000000000000000000000000') {
+                    const escrowContract = new ethers.Contract(escrowAddress, escrowArtifact.abi, signer);
+                    const [isEmployerSigned, isFreelancerSigned] = await Promise.all([
+                        escrowContract.projectemployerStaked(),
+                        escrowContract.freelancerStaked()
+                    ]);
+                    setIsEmployerSigned(isEmployerSigned);
+                    setIsFreelancerSigned(isFreelancerSigned);
+                }
                 const gigData = {
                     id: gigAddress.toString(),
                     title: gigName.toString(),
@@ -49,6 +68,10 @@ const ViewGig = () => {
                     isBidPlaced: isBidPlaced,
                     employer: employer,
                     numOfBidders: numOfBidders.toString(),
+                    isWinnerCalculated: WinnerCalculated,
+                    winner: winner,
+                    winningBid: winningBid.toString(),
+                    escrowAddress: escrowAddress,
                 };
                 console.log('Fetched project:', gigData);
                 setFetchedProject(gigData);
@@ -97,6 +120,35 @@ const ViewGig = () => {
         }
     };
 
+    // Function to handle computing winner
+    const handleComputeWinner = async () => {
+        console.log("Computing winner...");
+        const tx = await gigContract.computeWinner();
+        console.log('Winner computed successfully');
+        const winner = await gigContract.winner();
+        console.log("Winner: ", winner);
+        const winningBid = await gigContract.winningBid();
+        console.log("Winning bid: ", winningBid);
+        // setWinner({ winner: winner, winningBid: winningBid });
+    };
+
+    // Function to sign bid as freelancer
+    const signBidFreelancer = async () => {
+        console.log("Signing bid as freelancer...");
+        const escrowContract = new ethers.Contract(fetchedProject.escrowAddress, escrowArtifact.abi, signer);
+        const tx = await escrowContract.stakeFreelancer();
+        console.log('Bid signed successfully');
+    };
+
+    const signBidEmployer = async () => {
+        console.log("Deploying Escrow Contract...");
+        const escrowContract = new ethers.ContractFactory(escrowArtifact.abi, escrowArtifact.bytecode, signer);
+        const tx = await escrowContract.deploy(winner, winningBid, gigAddress);
+        const escrowContractAddress = tx.address;
+        console.log('Escrow Contract Deployed at ' + escrowContractAddress);
+        const tx2 = await gigContract.setEscrowAddress(escrowContractAddress);
+    };
+
     return (
         <div className="view-gig-container">
             <div className="left-section">
@@ -115,8 +167,30 @@ const ViewGig = () => {
                         </div>
                         <div className="bid-section">
                             {loggedInUser !== fetchedProject.employer && (
-
                                 <>
+                                    {fetchedProject.isWinnerCalculated && (
+                                        <>
+                                            {fetchedProject.winner === loggedInUser ? (
+                                                <>
+                                                    {isFreelancerSigned ? (
+                                                        <>
+                                                            <p>You have signed the Gig</p>
+                                                            <p>Submit your work here: </p>
+                                                            <Link to={`/submit/${gigAddress}`}>Submit Work</Link>
+                                                        </>
+                                                    ) : (
+                                                        <>
+                                                            <p>Congrats! You are the winner of this Gig</p>
+                                                            <p>Sign and Stake : {5 * ((fetchedProject.winningBid) % 100)} to finalize the gig</p>
+                                                            <Button onClick={signBidFreelancer}>Sign Gig</Button>
+                                                        </>
+                                                    )}
+                                                </>
+                                            ) : (
+                                                <p>Sorry, you are not the winner of this Gig. Check out other Gigs to work on.</p>
+                                            )}
+                                        </>
+                                    )}
                                     <div className="bid-input">
                                         <input
                                             type="number"
@@ -143,11 +217,20 @@ const ViewGig = () => {
                             )}
                             {loggedInUser === fetchedProject.employer && (
                                 <>
-                                <p>Number of Valid Bidders: {fetchedProject.numOfBidders} </p>
-                                <button /* onClick={handleComputeWinner}*/ >Compute Winner</button>
+                                    {fetchedProject.isWinnerCalculated ? (
+                                        <>
+                                            <p>Winner: {fetchedProject.winner}</p>
+                                            <p>Winning Bid: {fetchedProject.winningBid}</p>
+                                            <button onClick={signBidEmployer}>Sign Gig</button>
+                                        </>
+                                    ) : (
+                                        <>
+                                            <p>Number of Valid Bidders: {fetchedProject.numOfBidders}</p>
+                                            <button onClick={handleComputeWinner}>Compute Winner</button>
+                                        </>
+                                    )}
                                 </>
                             )}
-
                         </div>
                     </>
                 )}
