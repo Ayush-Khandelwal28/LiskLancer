@@ -2,6 +2,8 @@ import React, { useEffect, useState } from 'react';
 import { ethers } from "ethers";
 import { useParams } from 'react-router-dom';
 import gigArtifact from '../contractArtifacts/Gig.json';
+import masterArtifact from '../contractArtifacts/Master.json';
+import { masterAddress } from '../contractArtifacts/addresses';
 import './css/ViewGig.css';
 import freelanceGirl from "../assets/image.png";
 import { encrypt, decrypt } from '../scripts/encrypt';
@@ -17,12 +19,13 @@ const ViewGig = () => {
 
     const { id: gigAddress } = useParams();
 
+    const provider = new ethers.providers.Web3Provider(window.ethereum);
+    const signer = provider.getSigner();
+
     useEffect(() => {
         const fetchUserAndProject = async () => {
             try {
                 console.log('Fetching user...');
-                const provider = new ethers.providers.Web3Provider(window.ethereum);
-                const signer = provider.getSigner();
                 const currUser = await signer.getAddress();
                 setLoggedInUser(currUser);
 
@@ -81,6 +84,11 @@ const ViewGig = () => {
             console.log("Revealing bid...");
             const tx = await gigContract.revealBid(bidAmount);
             console.log('Bid revealed successfully');
+            console.log("Adding project freelancer...");
+            const masterabi = masterArtifact.abi;
+            const masterContract = new ethers.Contract(masterAddress, masterabi, signer);
+            const tx2 = await masterContract.addProjectFreelancer(loggedInUser, gigAddress);
+            console.log('Project freelancer added successfully');
         }
     };
 
