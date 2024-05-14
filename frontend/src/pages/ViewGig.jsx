@@ -15,6 +15,7 @@ const ViewGig = () => {
     const [loading, setLoading] = useState(true);
     const [loggedInUser, setLoggedInUser] = useState('');
     const [gigContract, setGigContract] = useState(null);
+    const [escrowContract, setEscrowContract] = useState(null);
     const [isBidPlaced, setIsBidPlaced] = useState(false);
     const [isFreelancerSigned, setIsFreelancerSigned] = useState(false);
     const [isEmployerSigned, setIsEmployerSigned] = useState(false);
@@ -52,7 +53,8 @@ const ViewGig = () => {
                     gigContract.escrowAddress()
                 ]);
                 if (escrowAddress != '0x0000000000000000000000000000000000000000') {
-                    const escrowContract = new ethers.Contract(escrowAddress, escrowArtifact.abi, signer);
+                    const currEscrowContract = new ethers.Contract(escrowAddress, escrowArtifact.abi, signer);
+                    setEscrowContract(currEscrowContract);
                     const [isEmployerSigned, isFreelancerSigned] = await Promise.all([
                         escrowContract.projectemployerStaked(),
                         escrowContract.freelancerStaked()
@@ -143,7 +145,7 @@ const ViewGig = () => {
     const signBidEmployer = async () => {
         console.log("Deploying Escrow Contract...");
         const escrowContract = new ethers.ContractFactory(escrowArtifact.abi, escrowArtifact.bytecode, signer);
-        const tx = await escrowContract.deploy(winner, winningBid, gigAddress);
+        const tx = await escrowContract.deploy(fetchedProject.winner, fetchedProject.winningBid, gigAddress);
         const escrowContractAddress = tx.address;
         console.log('Escrow Contract Deployed at ' + escrowContractAddress);
         const tx2 = await gigContract.setEscrowAddress(escrowContractAddress);
@@ -182,7 +184,7 @@ const ViewGig = () => {
                                                         <>
                                                             <p>Congrats! You are the winner of this Gig</p>
                                                             <p>Sign and Stake : {5 * ((fetchedProject.winningBid) % 100)} to finalize the gig</p>
-                                                            <Button onClick={signBidFreelancer}>Sign Gig</Button>
+                                                            <button onClick={signBidFreelancer}>Sign Gig</button>
                                                         </>
                                                     )}
                                                 </>

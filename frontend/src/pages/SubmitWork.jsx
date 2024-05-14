@@ -1,54 +1,77 @@
-import React, {useState} from 'react'
-import { useParams } from 'react-router-dom'
-import Done from '../assets/Done.png'
-import './css/SubmitWork.css'
+import React, { useState } from 'react';
+import { useParams } from 'react-router-dom';
+import Done from '../assets/Done.png';
+import gigArtifacts from '../contractArtifacts/Gig.json';
+import escrowArtifacts from '../contractArtifacts/Escrow.json';
+import './css/SubmitWork.css';
+
+const ethers = require('ethers');
 
 const SubmitWork = () => {
+    const { id: gigAddress } = useParams();
 
-    const { gigAddress } = useParams()
+    const [projectLink, setProjectLink] = useState('');
+    const [assets, setAssets] = useState('');
+    const [note, setNote] = useState('');
+    const [isGigSubmitted, setIsGigSubmitted] = useState(false);
 
-    const [jobId, setJobId] = useState("");
-    const [note, setNote] = useState("");
-    const [projectLink, setProjectLink] = useState("");
-    const [videoLink, setVideoLink] = useState("");
+    const provider = new ethers.providers.Web3Provider(window.ethereum);
+    const signer = provider.getSigner();
+
+    const handleSubmit = async (event) => {
+        event.preventDefault();
+        console.log("Submitting project");
+        const gigContract = new ethers.Contract(gigAddress, gigArtifacts.abi, signer);
+        console.log(gigContract);
+        const escrowAddress = await gigContract.escrowAddress();
+        console.log("Escrow Address is",escrowAddress);
+        const escrowContract = new ethers.Contract(escrowAddress, escrowArtifacts.abi, signer);
+        console.log(escrowContract);
+        console.log("Checking if project is submitted");
+        const isSubmitted = await escrowContract.projectSubmitted();
+        setIsGigSubmitted(isSubmitted);
+        console.log(isSubmitted);
+        console.log(projectLink, assets, note);
+        console.log("Submitting project");
+        const tx = await escrowContract.submitProject(projectLink, assets, note);
+        console.log("Project submitted", tx);
+    }
 
     return (
         <div className="post-project-container">
-            <div className="submit-project-right">
+            {isGigSubmitted ? (<div className="success-message">Project submitted successfully!</div>) : (<div className="submit-project-right">
                 <h1>
                     Done with the <span className="span-h1"> WORK ?</span>
-                </h1>{" "}
+                </h1>
                 <h2>
-                    {" "}
                     Submit <span className="span-h2"> IT </span>here
                 </h2>
                 <form className="project-form">
-                    <label htmlFor="jobId">Job ID:</label>
+                    <label htmlFor="gigId">Gig ID:</label>
                     <input
                         type="text"
-                        id="jobId"
-                        name="jobId"
-                        value={jobId}
-                        onChange={(event) => setJobId(event.target.value)}
-                        placeholder="Enter Job ID"
+                        id="gigId"
+                        name="gigId"
+                        value={gigAddress}
+                        disabled
                     />
-                    <label htmlFor="projectLink">Project Link:</label>
+                    <label htmlFor="projectLink">Gig Link:</label>
                     <input
                         type="text"
                         id="projectLink"
                         name="projectLink"
                         value={projectLink}
                         onChange={(event) => setProjectLink(event.target.value)}
-                        placeholder="Enter project link"
+                        placeholder="Enter Gig link"
                     />
-                    <label htmlFor="videoLink">Video Demonstration Link:</label>
+                    <label htmlFor="assets">Assets Link:</label>
                     <input
                         type="text"
-                        id="videoLink"
-                        name="videoLink"
-                        value={videoLink}
-                        onChange={(event) => setVideoLink(event.target.value)}
-                        placeholder="Enter video link"
+                        id="assets"
+                        name="assets"
+                        value={assets}
+                        onChange={(event) => setAssets(event.target.value)}
+                        placeholder="Enter Assets link"
                     />
                     <label htmlFor="note">Leave a Note:</label>
                     <textarea
@@ -58,14 +81,14 @@ const SubmitWork = () => {
                         onChange={(event) => setNote(event.target.value)}
                         placeholder="Write your note here..."
                     />
-                    <button type="submit">Submit</button>
+                    <button type="submit" onClick={handleSubmit}>Submit</button>
                 </form>
-            </div>
+            </div>)}
             <div className="submit-project-left">
                 <img src={Done} alt="Issue Illustration" />
             </div>
         </div>
     );
-}
+};
 
-export default SubmitWork
+export default SubmitWork;

@@ -7,6 +7,16 @@
     height: 100%;
 }
 
+.success-message {
+    background-color: blue; /* Green */
+    color: white;
+    text-align: center;
+    padding: 10px;
+    margin-left: -50px;
+    margin-bottom: 20px;
+  }
+  
+
 .post-project-container{
     display: flex;
     justify-content: center;
