@@ -1,0 +1,82 @@
+.raise-issue-container {
+    margin-top: 50px;
+}
+
+span{
+    color: #90D26D;
+}
+.raise-issue-heading {
+     align-items: center;
+    font-weight: bolder;   /* Red color */
+    font-size: 50px;
+}
+
+.raise-issue-content {
+    display: flex;
+    justify-content: space-around;
+    align-items: center;
+    margin-top: 20px;
+}
+
+.raise-issue-left {
+    width: 40%;
+}
+
+.raise-issue-left img {
+    width: 100%;
+        /* transition: transform 0.3s ease, box-shadow 0.3s ease; */
+}
+
+.raise-issue-right {
+    width: 40%;
+    align-items: center;
+    margin-left: 15%;
+        transition: transform 0.3s ease, box-shadow 0.3s ease;
+}
+.raise-issue-right:hover {
+    transform: scale(1.1);
+}
+.raise-issue-form {
+    margin-top: 20px;
+        display: flex;
+        flex-direction: column;
+        align-items: center;
+        width: 80%;
+}
+
+.raise-issue-form label {
+    margin-bottom: 10px;
+}
+
+.raise-issue-form input,
+.raise-issue-form textarea {
+    margin-bottom: 20px;
+    width: 100%;
+    padding: 10px;
+    border: 1px solid #ccc;
+    border-radius: 5px;
+}
+
+.raise-issue-button {
+    margin: 1rem 0;
+        background-color: #90D26D;
+        color: #fff;
+        padding: 10px 20px;
+        border: none;
+        border-radius: 25px;
+        cursor: pointer;
+        font-size: 20px;
+        transition: transform 0.3s ease, box-shadow 0.3s ease;
+        margin-left: 10px;
+        text-decoration: none;
+}
+
+.raise-issue-button:hover {
+    background-color: #FFC727;
+        transform: scale(1.1);
+}
+h2{
+    text-align: center;
+    margin-right: 20%;
+    font-size: 30px;
+}
