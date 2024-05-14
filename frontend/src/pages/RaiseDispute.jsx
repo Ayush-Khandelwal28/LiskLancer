@@ -19,7 +19,7 @@ const Dispute = () => {
     e.preventDefault();
     const problemDescription = document.getElementById('problemDescription').value;
     console.log(projectId, problemDescription);
-    const arbiters = [];
+    const arbiters = ['0xe658fD80111E460D5b58FaB6fe0F18F81ee2CBe1','0xD3C15aEa275ac6A6f1eD8681Ee002150C9DF810f','0xf39Fd6e51aad88F6F4ce6aB8827279cffFb92266'];
     const contract = new ethers.ContractFactory(disputeArtifacts.abi, disputeArtifacts.bytecode, signer);
     const tx = await contract.deploy(projectId, problemDescription, arbiters);
     const disputeContractAddress = tx.address;

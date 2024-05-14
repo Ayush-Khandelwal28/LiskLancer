@@ -1,0 +1,45 @@
+.vote-dispute-container {
+    margin: 20px;
+  }
+  
+  .vote-dispute-container h2 {
+    margin-bottom: 20px;
+  }
+  
+  .vote-dispute-container .gig-details,
+  .vote-dispute-container .submission-details {
+    margin-bottom: 20px;
+  }
+  
+  .vote-dispute-container .submission-details p {
+    margin-bottom: 10px;
+  }
+  
+  .vote-dispute-container form {
+    margin-top: 20px;
+  }
+  
+  .vote-dispute-container label {
+    margin-right: 10px;
+  }
+  
+  .vote-dispute-container button {
+    padding: 10px 20px;
+    margin-top: 10px;
+    border: none;
+    border-radius: 5px;
+    background-color: #3498db;
+    color: #fff;
+    cursor: pointer;
+    transition: background-color 0.3s;
+  }
+  
+  .vote-dispute-container button:disabled {
+    background-color: #ccc;
+    cursor: not-allowed;
+  }
+  
+  .vote-dispute-container button:hover {
+    background-color: #2980b9;
+  }
+  
