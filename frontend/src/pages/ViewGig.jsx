@@ -33,11 +33,13 @@ const ViewGig = () => {
                 const gigabi = gigArtifact.abi;
                 const gigContract = new ethers.Contract(gigAddress, gigabi, signer);
                 setGigContract(gigContract);
-                const [gigName, gigDescription, gigMetrics, isBidPlaced] = await Promise.all([
+                const [gigName, gigDescription, gigMetrics, isBidPlaced, employer, numOfBidders] = await Promise.all([
                     gigContract.projectName(),
                     gigContract.projectDescription(),
                     gigContract.projectMetrics(),
                     gigContract.hasPlacedBid(currUser),
+                    gigContract.employer(),
+                    gigContract.getNumBidsPlaced(),
                 ]);
                 const gigData = {
                     id: gigAddress.toString(),
@@ -45,7 +47,10 @@ const ViewGig = () => {
                     description: gigDescription.toString(),
                     metrics: gigMetrics.toString(),
                     isBidPlaced: isBidPlaced,
+                    employer: employer,
+                    numOfBidders: numOfBidders.toString(),
                 };
+                console.log('Fetched project:', gigData);
                 setFetchedProject(gigData);
                 setIsBidPlaced(gigData.isBidPlaced);
 
@@ -109,28 +114,40 @@ const ViewGig = () => {
                             <p>{fetchedProject.metrics}</p>
                         </div>
                         <div className="bid-section">
-                            <div className="bid-input">
-                                <input
-                                    type="number"
-                                    placeholder="Enter your bid"
-                                    value={bidAmount}
-                                    onChange={(e) => setBidAmount(e.target.value)}
-                                />
-                            </div>
-                            <div className="bid-input">
-                                <input
-                                    type="text"
-                                    placeholder="Enter your secret key"
-                                    value={secretKey}
-                                    onChange={(e) => setSecretKey(e.target.value)}
-                                />
-                            </div>
-                            {!isBidPlaced && (
-                                <button onClick={handlePlaceBid}>Place Bid</button>
+                            {loggedInUser !== fetchedProject.employer && (
+
+                                <>
+                                    <div className="bid-input">
+                                        <input
+                                            type="number"
+                                            placeholder="Enter your bid"
+                                            value={bidAmount}
+                                            onChange={(e) => setBidAmount(e.target.value)}
+                                        />
+                                    </div>
+                                    <div className="bid-input">
+                                        <input
+                                            type="text"
+                                            placeholder="Enter your secret key"
+                                            value={secretKey}
+                                            onChange={(e) => setSecretKey(e.target.value)}
+                                        />
+                                    </div>
+                                    {!isBidPlaced && ( // If bid is not placed
+                                        <button onClick={handlePlaceBid}>Place Bid</button>
+                                    )}
+                                    {isBidPlaced && ( // If bid is placed
+                                        <button onClick={handleRevealBid}>Reveal Bid</button>
+                                    )}
+                                </>
                             )}
-                            {isBidPlaced && (
-                                <button onClick={handleRevealBid}>Reveal Bid</button>
+                            {loggedInUser === fetchedProject.employer && (
+                                <>
+                                <p>Number of Valid Bidders: {fetchedProject.numOfBidders} </p>
+                                <button /* onClick={handleComputeWinner}*/ >Compute Winner</button>
+                                </>
                             )}
+
                         </div>
                     </>
                 )}
