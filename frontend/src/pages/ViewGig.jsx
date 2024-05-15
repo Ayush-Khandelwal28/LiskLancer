@@ -69,14 +69,14 @@ const ViewGig = () => {
                 if (escrowAddress != '0x0000000000000000000000000000000000000000') {
                     const currEscrowContract = new ethers.Contract(escrowAddress, escrowArtifact.abi, signer);
                     setEscrowContract(currEscrowContract);
-                    const [isEmployerSigned, isFreelancerSigned, isGigSubmitted] = await Promise.all([
+                    const [isEmployerSigned, isFreelancerSigned, GigSubmitted] = await Promise.all([
                         currEscrowContract.projectemployerStaked(),
                         currEscrowContract.freelancerStaked(),
                         currEscrowContract.projectSubmitted()
                     ]);
                     setIsEmployerSigned(isEmployerSigned);
                     setIsFreelancerSigned(isFreelancerSigned);
-                    setIsGigSubmitted(isGigSubmitted);
+                    setIsGigSubmitted(GigSubmitted);
                     if (isGigSubmitted) {
                         await fetchSubmittedGig();
                         console.log("Fetched submitted gig...");
@@ -161,12 +161,10 @@ const ViewGig = () => {
         const tx = await escrowContract.stakeFreelancer();
         console.log('Bid signed successfully');
         console.log("Transferring staking amount to freelancer...");
-        const stakingAmount = ((parseInt(fetchedProject.winningBid)) * 5) % 100;
+        const stakingAmount = ((parseInt(fetchedProject.winningBid)) * 5) / 100;
         const tx2 = await tokenContract.transfer(
-            {
-                to: toAddress,
-                value: stakingAmount,
-            }
+            toAddress,
+            stakingAmount
         )
         console.log('Staking amount transferred successfully');
     };
@@ -182,10 +180,8 @@ const ViewGig = () => {
         const stakingAmount = (parseInt(fetchedProject.winningBid));
         console.log("Staking amount as an employer...");
         const tx3 = await tokenContract.transfer(
-            {
-                to: toAddress,
-                value: stakingAmount,
-            }
+            toAddress,
+            stakingAmount
         )
         console.log('Staking amount transferred successfully');
     };
@@ -246,7 +242,7 @@ const ViewGig = () => {
                                                         <>
                                                             <p>Congrats! You are the winner of this Gig</p>
                                                             <p>Winning Bid: {fetchedProject.winningBid}</p>
-                                                            <p>Sign and Stake : {((parseInt(fetchedProject.winningBid)) * 5) % 100} to finalize the gig</p>
+                                                            <p>Sign and Stake : {((parseInt(fetchedProject.winningBid)) * 5) / 100} to finalize the gig</p>
                                                             <button onClick={signBidFreelancer}>Sign Gig</button>
                                                         </>
                                                     )}

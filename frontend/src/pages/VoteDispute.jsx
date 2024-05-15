@@ -1,5 +1,5 @@
 import React, { useState, useEffect } from 'react';
-import './css/VoteDispute.css'; 
+import './css/VoteDispute.css';
 import gigArtifact from '../contractArtifacts/Gig.json';
 import escrowArtifact from '../contractArtifacts/Escrow.json';
 import disputeArtifact from '../contractArtifacts/disputeHandler.json';
@@ -13,6 +13,7 @@ const VoteDispute = () => {
   const [disputeContract, setDisputeContract] = useState(null);
   const [gigContract, setGigContract] = useState(null);
   const [gigDetails, setGigDetails] = useState(null);
+  const [gigIssue, setGigIssue] = useState(null);
   const [submissionDetails, setSubmissionDetails] = useState({});
   const [vote, setVote] = useState(true);
   const [voted, setVoted] = useState(false);
@@ -28,6 +29,7 @@ const VoteDispute = () => {
       // Example: Fetching gig name and description
       const gigAddress = await disputeContract.projectId();
       const gigIssue = await disputeContract.problemDescription();
+      setGigIssue(gigIssue);
       console.log(gigAddress, gigIssue);
       const gigContract = new ethers.Contract(gigAddress, gigArtifact.abi, signer);
       setGigContract(gigContract);
@@ -78,6 +80,7 @@ const VoteDispute = () => {
           <h3>Gig Details</h3>
           <p>Name: {gigDetails.name}</p>
           <p>Description: {gigDetails.description}</p>
+          <p>Issue with Subbmitted Gig : {gigIssue}</p>
         </div>
       )}
       {submissionDetails && (
