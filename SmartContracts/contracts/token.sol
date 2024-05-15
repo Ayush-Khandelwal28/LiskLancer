@@ -1,113 +1,97 @@
-pragma solidity ^0.4.24;
+// SPDX-License-Identifier: MIT
+pragma solidity ^0.8.0;
 
-//Safe Math Interface
+import { ERC20 } from "@openzeppelin/contracts/token/ERC20/ERC20.sol";
+import { IERC165 } from "@openzeppelin/contracts/utils/introspection/IERC165.sol";
+import { IOptimismMintableERC20 } from "github.com/ethereum-optimism/optimism/blob/v1.1.4/packages/contracts-bedrock/src/universal/IOptimismMintableERC20.sol";
 
-contract SafeMath {
+contract MyCustomL2Token is IOptimismMintableERC20, ERC20 {
+    /// @notice Address of the corresponding version of this token on the remote chain.
+    address public immutable REMOTE_TOKEN;
 
-    function safeAdd(uint a, uint b) public pure returns (uint c) {
-        c = a + b;
-        require(c >= a);
+    /// @notice Address of the StandardBridge on this network.
+    address public immutable BRIDGE;
+
+    /// @notice Emitted whenever tokens are minted for an account.
+    /// @param account Address of the account tokens are being minted for.
+    /// @param amount  Amount of tokens minted.
+    event Mint(address indexed account, uint256 amount);
+
+    /// @notice Emitted whenever tokens are burned from an account.
+    /// @param account Address of the account tokens are being burned from.
+    /// @param amount  Amount of tokens burned.
+    event Burn(address indexed account, uint256 amount);
+
+    /// @notice A modifier that only allows the bridge to call.
+    modifier onlyBridge() {
+        require(msg.sender == BRIDGE, "MyCustomL2Token: only bridge can mint and burn");
+        _;
     }
 
-    function safeSub(uint a, uint b) public pure returns (uint c) {
-        require(b <= a);
-        c = a - b;
+    /// @param _bridge      Address of the L2 standard bridge.
+    /// @param _remoteToken Address of the corresponding L1 token.
+    /// @param _name        ERC20 name.
+    /// @param _symbol      ERC20 symbol.
+    constructor(
+        address _bridge,
+        address _remoteToken,
+        string memory _name,
+        string memory _symbol
+    )
+        ERC20(_name, _symbol)
+    {
+        REMOTE_TOKEN = _remoteToken;
+        BRIDGE = _bridge;
     }
 
-    function safeMul(uint a, uint b) public pure returns (uint c) {
-        c = a * b;
-        require(a == 0 || c / a == b);
+    /// @custom:legacy
+    /// @notice Legacy getter for REMOTE_TOKEN.
+    function remoteToken() public view returns (address) {
+        return REMOTE_TOKEN;
     }
 
-    function safeDiv(uint a, uint b) public pure returns (uint c) {
-        require(b > 0);
-        c = a / b;
-    }
-}
-
-
-// ERC Token Standard #20 Interface
-
-contract ERC20Interface {
-    function totalSupply() public constant returns (uint);
-    function balanceOf(address tokenOwner) public constant returns (uint balance);
-    function allowance(address tokenOwner, address spender) public constant returns (uint remaining);
-    function transfer(address to, uint tokens) public returns (bool success);
-    function approve(address spender, uint tokens) public returns (bool success);
-    function transferFrom(address from, address to, uint tokens) public returns (bool success);
-
-    event Transfer(address indexed from, address indexed to, uint tokens);
-    event Approval(address indexed tokenOwner, address indexed spender, uint tokens);
-}
-
-
-//Contract function to receive approval and execute function in one call
-
-contract ApproveAndCallFallBack {
-    function receiveApproval(address from, uint256 tokens, address token, bytes data) public;
-}
-
-//Actual token contract
-
-contract QKCToken is ERC20Interface, SafeMath {
-    string public symbol;
-    string public  name;
-    uint8 public decimals;
-    uint public _totalSupply;
-
-    mapping(address => uint) balances;
-    mapping(address => mapping(address => uint)) allowed;
-
-    constructor() public {
-        symbol = "BTC";
-        name = "Gig Coins";
-        decimals = 2;
-        _totalSupply = 100000000;
-        balances[0xD3C15aEa275ac6A6f1eD8681Ee002150C9DF810f] = _totalSupply;
-        emit Transfer(address(0), 0xD3C15aEa275ac6A6f1eD8681Ee002150C9DF810f, _totalSupply);
+    /// @custom:legacy
+    /// @notice Legacy getter for BRIDGE.
+    function bridge() public view returns (address) {
+        return BRIDGE;
     }
 
-    function totalSupply() public constant returns (uint) {
-        return _totalSupply  - balances[address(0)];
+    /// @notice ERC165 interface check function.
+    /// @param _interfaceId Interface ID to check.
+    /// @return Whether or not the interface is supported by this contract.
+    function supportsInterface(bytes4 _interfaceId) external pure virtual returns (bool) {
+        bytes4 iface1 = type(IERC165).interfaceId;
+        // Interface corresponding to the updated OptimismMintableERC20 (this contract).
+        bytes4 iface2 = type(IOptimismMintableERC20).interfaceId;
+        return _interfaceId == iface1 || _interfaceId == iface2;
     }
 
-    function balanceOf(address tokenOwner) public constant returns (uint balance) {
-        return balances[tokenOwner];
+    /// @notice Allows the StandardBridge on this network to mint tokens.
+    /// @param _to     Address to mint tokens to.
+    /// @param _amount Amount of tokens to mint.
+    function mint(
+        address _to,
+        uint256 _amount
+    )
+        external
+        virtual
+        override(IOptimismMintableERC20)
+        onlyBridge
+    {
+        _mint(_to, _amount);
+        emit Mint(_to, _amount);
     }
 
-    function transfer(address to, uint tokens) public returns (bool success) {
-        balances[msg.sender] = safeSub(balances[msg.sender], tokens);
-        balances[to] = safeAdd(balances[to], tokens);
-        emit Transfer(msg.sender, to, tokens);
-        return true;
-    }
-
-    function approve(address spender, uint tokens) public returns (bool success) {
-        allowed[msg.sender][spender] = tokens;
-        emit Approval(msg.sender, spender, tokens);
-        return true;
-    }
-
-    function transferFrom(address from, address to, uint tokens) public returns (bool success) {
-        balances[from] = safeSub(balances[from], tokens);
-        allowed[from][msg.sender] = safeSub(allowed[from][msg.sender], tokens);
-        balances[to] = safeAdd(balances[to], tokens);
-        emit Transfer(from, to, tokens);
-        return true;
-    }
-
-    function allowance(address tokenOwner, address spender) public constant returns (uint remaining) {
-        return allowed[tokenOwner][spender];
-    }
-
-    function approveAndCall(address spender, uint tokens, bytes data) public returns (bool success) {
-        allowed[msg.sender][spender] = tokens;
-        emit Approval(msg.sender, spender, tokens);
-        ApproveAndCallFallBack(spender).receiveApproval(msg.sender, tokens, this, data);
-        return true;
-    }
-
-    function () public payable {
-        revert();
+    /// @notice Prevents tokens from being withdrawn to L1.
+    function burn(
+        address,
+        uint256
+    )
+        external
+        virtual
+        override(IOptimismMintableERC20)
+        onlyBridge
+    {
+        revert("MyCustomL2Token cannot be withdrawn");
     }
 }
