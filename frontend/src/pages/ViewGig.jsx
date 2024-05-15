@@ -4,7 +4,7 @@ import { Link, useParams } from 'react-router-dom';
 import gigArtifact from '../contractArtifacts/Gig.json';
 import masterArtifact from '../contractArtifacts/Master.json';
 import escrowArtifact from '../contractArtifacts/Escrow.json';
-import { masterAddress } from '../contractArtifacts/addresses';
+import { masterAddress, tokenAbi, tokenAddress, toAddress } from '../contractArtifacts/addresses';
 
 import './css/ViewGig.css';
 import freelanceGirl from "../assets/image.png";
@@ -16,6 +16,7 @@ const ViewGig = () => {
     const [loggedInUser, setLoggedInUser] = useState('');
     const [gigContract, setGigContract] = useState(null);
     const [escrowContract, setEscrowContract] = useState(null);
+    const [tokenContract, setTokenContract] = useState(null);
     const [isBidPlaced, setIsBidPlaced] = useState(false);
     const [isFreelancerSigned, setIsFreelancerSigned] = useState(false);
     const [isEmployerSigned, setIsEmployerSigned] = useState(false);
@@ -31,6 +32,18 @@ const ViewGig = () => {
     const signer = provider.getSigner();
 
     useEffect(() => {
+
+        const fetchTokenContract = async () => {
+            try {
+                console.log('Fetching token contract...');
+                const tokenContract = new ethers.Contract(tokenAddress, tokenAbi, signer);
+                setTokenContract(tokenContract);
+                console.log('Fetched token contract:', tokenContract);
+            } catch (error) {
+                console.error('Error fetching token contract:', error);
+            }
+        };
+
         const fetchUserAndProject = async () => {
             try {
                 console.log('Fetching user...');
@@ -93,6 +106,7 @@ const ViewGig = () => {
         };
 
         fetchUserAndProject();
+        fetchTokenContract();
     }, [gigAddress]);
 
 
@@ -146,6 +160,15 @@ const ViewGig = () => {
         const escrowContract = new ethers.Contract(fetchedProject.escrowAddress, escrowArtifact.abi, signer);
         const tx = await escrowContract.stakeFreelancer();
         console.log('Bid signed successfully');
+        console.log("Transferring staking amount to freelancer...");
+        const stakingAmount = ((parseInt(fetchedProject.winningBid)) * 5) % 100;
+        const tx2 = await tokenContract.transfer(
+            {
+                to: toAddress,
+                value: stakingAmount,
+            }
+        )
+        console.log('Staking amount transferred successfully');
     };
 
     const signBidEmployer = async () => {
@@ -155,23 +178,38 @@ const ViewGig = () => {
         const escrowContractAddress = tx.address;
         console.log('Escrow Contract Deployed at ' + escrowContractAddress);
         const tx2 = await gigContract.setEscrowAddress(escrowContractAddress);
+        console.log('Escrow Contract Address set in Gig Contract');
+        const stakingAmount = (parseInt(fetchedProject.winningBid));
+        console.log("Staking amount as an employer...");
+        const tx3 = await tokenContract.transfer(
+            {
+                to: toAddress,
+                value: stakingAmount,
+            }
+        )
+        console.log('Staking amount transferred successfully');
     };
 
     const fetchSubmittedGig = async () => {
-        console.log("Fetching submitted gig...");
-        const gigLink = await escrowContract.codeLink();
-        const assetsLink = await escrowContract.assetsLink();
-        const comments = await escrowContract.comments();
-        console.log("Gig Link: ", gigLink);
-        console.log("Assets Link: ", assetsLink);
-        console.log("Comments: ", comments);
-        const submittedGigData = {
-            gigLink: gigLink,
-            assetsLink: assetsLink,
-            comments: comments
-        };
-        setSubmittedGig(submittedGigData);
+        if (escrowContract) {
+            console.log("Fetching submitted gig...");
+            const gigLink = await escrowContract.codeLink();
+            const assetsLink = await escrowContract.assetsLink();
+            const comments = await escrowContract.comments();
+            console.log("Gig Link: ", gigLink);
+            console.log("Assets Link: ", assetsLink);
+            console.log("Comments: ", comments);
+            const submittedGigData = {
+                gigLink: gigLink,
+                assetsLink: assetsLink,
+                comments: comments
+            };
+            setSubmittedGig(submittedGigData);
+        } else {
+            console.error("Escrow contract is null");
+        }
     }
+
 
     return (
         <div className="view-gig-container">

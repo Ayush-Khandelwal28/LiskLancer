@@ -2,23 +2,26 @@ import React, { useEffect, useState } from 'react'
 import { Link } from 'react-router-dom';
 import { ConnectButton } from "@rainbow-me/rainbowkit";
 import { tokenAbi } from '../contractArtifacts/addresses';
-import { Routes, Route, Link as RouterLink } from "react-router-dom";
+import { tokenAddress } from '../contractArtifacts/addresses';
 const ethers = require('ethers');
 
 const Navbar = () => {
 
   const [userBalance, setUserBalance] = useState(0);
 
-  const address = '0x0a9DCF8017F637B23e96c79Ac0261FB83fB0Df45';
+  const address = tokenAddress;
 
 
 
-  const url = 'https://rpc.sepolia-api.lisk.com';
-  const provider = new ethers.providers.JsonRpcProvider(url);
+  // const url = 'https://rpc.sepolia-api.lisk.com';
+  // const provider = new ethers.providers.JsonRpcProvider(url);
+  const provider = new ethers.providers.Web3Provider(window.ethereum);
+  const signer = provider.getSigner();
+  const loggedInUser = signer.getAddress();
   const contract = new ethers.Contract(address, tokenAbi, provider);
 
   const fetchbalance = async () => {
-    const balance = await contract.balanceOf('0xe658fD80111E460D5b58FaB6fe0F18F81ee2CBe1');
+    const balance = await contract.balanceOf(loggedInUser);
     setUserBalance(balance.toString());
     console.log("This user's balance is", balance.toString());
   }
